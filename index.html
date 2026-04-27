@@ -14,8 +14,48 @@
             --bg:      #f2f2ec;
             --card:    #ffffff;
             --border:  #e5e7eb;
+            --ticker-bg: var(--accent);
         }
-        body { font-family: Georgia, serif; background: var(--bg); color: var(--text); }
+        /* DARK MODE */
+        [data-theme="dark"] {
+            --primary: #0a1628;
+            --accent:  #e63946;
+            --text:    #e2e8f0;
+            --muted:   #94a3b8;
+            --bg:      #0f1923;
+            --card:    #1a2535;
+            --border:  #2d3a4a;
+        }
+        [data-theme="dark"] body { background:var(--bg); color:var(--text); }
+        [data-theme="dark"] .ad-leader { background:#0d1520; }
+        [data-theme="dark"] .trend-row:hover,
+        [data-theme="dark"] .reg-link:hover,
+        [data-theme="dark"] .src-row:hover,
+        [data-theme="dark"] .hl-item:hover { background:#1f2f42; }
+        [data-theme="dark"] .wx-detail,
+        [data-theme="dark"] .wx-day,
+        [data-theme="dark"] .filter-body,
+        [data-theme="dark"] .splash-answer { background:#1f2f42; border-color:var(--border); color:var(--text); }
+        [data-theme="dark"] .splash-card { background:#1a2535; }
+        [data-theme="dark"] .splash-body { background:#1a2535; }
+        [data-theme="dark"] .modal { background:#1a2535; }
+        [data-theme="dark"] .modal-body { color:var(--text); }
+        [data-theme="dark"] .modal-body p, [data-theme="dark"] .modal-body ul { color:#cbd5e1; }
+        [data-theme="dark"] .filter-input, [data-theme="dark"] .wx-zip-input { background:#0f1923; color:var(--text); border-color:var(--border); }
+
+        /* FONT SIZE */
+        body.fs-md .card-title { font-size:15px; }
+        body.fs-md .card-desc  { font-size:13px; }
+        body.fs-md .feat-title { font-size:22px; }
+        body.fs-md .hl-title   { font-size:16px; }
+        body.fs-md .trend-title{ font-size:13px; }
+        body.fs-lg .card-title { font-size:17px; }
+        body.fs-lg .card-desc  { font-size:14px; }
+        body.fs-lg .feat-title { font-size:25px; }
+        body.fs-lg .hl-title   { font-size:18px; }
+        body.fs-lg .trend-title{ font-size:14px; }
+
+        body { font-family: Georgia, serif; background: var(--bg); color: var(--text); transition: background .25s, color .25s; }
 
         /* TICKER */
         .ticker-wrap { background: var(--accent); overflow: hidden; padding: 7px 0; }
@@ -40,8 +80,13 @@
         .tagline-banner { background:var(--bg); border-bottom:1px solid var(--border); padding:18px 28px; text-align:center; }
         .tagline-banner-text { font:900 38px/1.1 'Arial Black',Arial,sans-serif; color:var(--primary); letter-spacing:-1.5px; text-transform:uppercase; }
         .tagline-banner-text span { color:var(--accent); }
-        .hdr-right { text-align:right; }
+        .hdr-right { text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
         .hdr-date  { color:#9ca3af; font:12px/1.4 Arial,sans-serif; }
+        .hdr-controls { display:flex; align-items:center; gap:6px; }
+        .hdr-ctrl-btn { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); color:#9ca3af; font:700 11px/1 Arial,sans-serif; padding:5px 9px; border-radius:4px; cursor:pointer; transition:all .15s; white-space:nowrap; letter-spacing:.3px; }
+        .hdr-ctrl-btn:hover { background:rgba(255,255,255,.18); color:#fff; }
+        .hdr-ctrl-btn.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+        .hdr-ctrl-sep { color:#2d3a4a; font-size:16px; line-height:1; }
 
         /* AD LEADERBOARD */
         .ad-leader { background:#eaeae2; border-bottom:1px solid var(--border); display:flex; justify-content:center; padding:10px; }
@@ -254,6 +299,27 @@
         .splash-skip:hover { background:#c1121f; }
         .splash-loading-q { font:italic 13px Georgia,serif; color:#9ca3af; padding:20px 0; text-align:center; }
 
+        /* BOOKMARK */
+        .bm-btn { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.45); border:none; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:background .15s, transform .15s; z-index:2; }
+        .bm-btn:hover { background:rgba(0,0,0,.7); transform:scale(1.1); }
+        .bm-btn.saved { background:var(--accent); }
+        .card { position:relative; }
+        .featured { position:relative; }
+        .read-time { color:#9ca3af; font:600 10px/1 Arial,sans-serif; }
+        /* SAVED SIDEBAR */
+        .saved-empty { padding:16px; font:italic 12px Arial,sans-serif; color:#9ca3af; text-align:center; }
+        .saved-item { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; padding:10px 16px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; }
+        .saved-item:last-child { border-bottom:none; }
+        .saved-item:hover { background:#f8f8f2; }
+        [data-theme="dark"] .saved-item:hover { background:#1f2f42; }
+        .saved-item-title { font:600 12px/1.4 Arial,sans-serif; color:var(--text); flex:1; }
+        .saved-item-src { font:700 10px/1 Arial,sans-serif; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; margin-top:3px; }
+        .saved-rm { background:none; border:none; color:#9ca3af; font-size:16px; cursor:pointer; padding:0; line-height:1; flex-shrink:0; transition:color .1s; }
+        .saved-rm:hover { color:var(--accent); }
+        .saved-footer { padding:10px 16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; }
+        .saved-clear { background:none; border:none; font:700 11px Arial,sans-serif; color:var(--accent); cursor:pointer; padding:0; }
+        .saved-clear:hover { text-decoration:underline; }
+
         /* VIEW TOGGLE */
         .view-toggle { display:flex; align-items:center; gap:6px; }
         .vt-btn { background:none; border:1px solid #d1d5db; padding:5px 10px; font:700 11px/1 Arial,sans-serif; cursor:pointer; border-radius:4px; color:var(--muted); transition:all .15s; }
@@ -316,6 +382,12 @@
         <div class="hdr-center-sub">AI-powered global news wire</div>
     </div>
     <div class="hdr-right">
+        <div class="hdr-controls">
+            <button class="hdr-ctrl-btn" id="darkBtn" onclick="toggleDarkMode()" title="Toggle dark mode">🌙 Dark</button>
+            <span class="hdr-ctrl-sep">|</span>
+            <button class="hdr-ctrl-btn" onclick="adjustFont(-1)" title="Smaller text">A−</button>
+            <button class="hdr-ctrl-btn" onclick="adjustFont(1)" title="Larger text">A+</button>
+        </div>
         <div class="hdr-date" id="hdrDate">—</div>
     </div>
 </header>
@@ -445,6 +517,12 @@
                 <div style="font:10px Arial,sans-serif;color:#f5deb3;margin-top:2px">lonestarbarkco.com</div>
             </div>
         </a>
+        <!-- SAVED FOR LATER -->
+        <div class="sb-card">
+            <div class="sb-head">🔖 Saved for Later</div>
+            <div id="savedList"><div class="saved-empty">No saved articles yet.<br>Tap 🔖 on any story.</div></div>
+        </div>
+
         <div class="sb-card">
             <div class="sb-head">🌐 Browse by Region</div>
             <div id="regions"></div>
@@ -833,6 +911,12 @@ function imgEl(url, h, sourceName) {
   return fallback;
 }
 
+function bmBtn(a) {
+  const saved = isBookmarked(a.link);
+  const d = encodeURIComponent(JSON.stringify({title:a.title,link:a.link,source:a.source,pubDate:a.pubDate,description:a.description}));
+  return `<button class="bm-btn${saved?' saved':''}" title="${saved?'Remove bookmark':'Save for later'}" onclick="event.stopPropagation();toggleBookmark(this,'${d}')">${saved?'🔖':'🔖'}</button>`;
+}
+
 function renderGrid(articles) {
   const g = document.getElementById('newsGrid');
   g.className = 'grid';
@@ -845,24 +929,26 @@ function renderGrid(articles) {
   const f = articles[0];
   let html = `
     <div class="featured" onclick="window.open('${esc(f.link)}','_blank')">
+      ${bmBtn(f)}
       ${imgEl(f.image, 280, f.source)}
       <div class="feat-body">
         <div class="card-src">${esc(f.source)}</div>
         <div class="feat-title">${esc(f.title)}</div>
         <div class="card-desc" style="-webkit-line-clamp:5">${esc(f.description)}</div>
-        <div class="card-meta">${timeAgo(f.pubDate)}</div>
+        <div class="card-meta">${timeAgo(f.pubDate)} · <span class="read-time">${readTime(f.description)}</span></div>
       </div>
     </div>`;
 
   articles.slice(1, 22).forEach(a => {
     html += `
       <div class="card" onclick="window.open('${esc(a.link)}','_blank')">
+        ${bmBtn(a)}
         ${imgEl(a.image, 168, a.source)}
         <div class="card-body">
           <div class="card-src">${esc(a.source)}</div>
           <div class="card-title">${esc(a.title)}</div>
           <div class="card-desc">${esc(a.description)}</div>
-          <div class="card-meta">${timeAgo(a.pubDate)}</div>
+          <div class="card-meta">${timeAgo(a.pubDate)} · <span class="read-time">${readTime(a.description)}</span></div>
         </div>
       </div>`;
   });
@@ -879,13 +965,18 @@ function renderList(articles) {
       <button class="err-btn" onclick="doRefresh()">Try Again</button></div>`;
     return;
   }
-  g.innerHTML = articles.slice(0, 60).map((a, i) => `
+  g.innerHTML = articles.slice(0, 60).map((a, i) => {
+    const d = encodeURIComponent(JSON.stringify({title:a.title,link:a.link,source:a.source,pubDate:a.pubDate,description:a.description}));
+    const saved = isBookmarked(a.link);
+    return `
     <div class="hl-item" onclick="window.open('${esc(a.link)}','_blank')">
       <span class="hl-num">${String(i+1).padStart(2,'0')}</span>
       <span class="hl-src">${esc(a.source)}</span>
       <span class="hl-title">${esc(a.title)}</span>
-      <span class="hl-time">${timeAgo(a.pubDate)}</span>
-    </div>`).join('');
+      <span class="hl-time">${readTime(a.description)} · ${timeAgo(a.pubDate)}</span>
+      <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 4px;opacity:${saved?1:.35};transition:opacity .15s" title="${saved?'Remove':'Save'}" onclick="event.stopPropagation();toggleBookmark(this,'${d}')">${saved?'🔖':'🔖'}</button>
+    </div>`;
+  }).join('');
 }
 
 // ── VIEW MODE TOGGLE ──────────────────────────────────────────────────────
@@ -1411,6 +1502,99 @@ function tick() {
 }
 tick(); setInterval(tick, 30000);
 
+// ── READ TIME ─────────────────────────────────────────────────────────────
+function readTime(text) {
+  if (!text) return '1 min read';
+  const words = text.trim().split(/\s+/).length;
+  const mins = Math.max(1, Math.round(words / 220));
+  return `${mins} min read`;
+}
+
+// ── DARK MODE ─────────────────────────────────────────────────────────────
+let darkMode = false;
+function toggleDarkMode() {
+  darkMode = !darkMode;
+  document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
+  const btn = document.getElementById('darkBtn');
+  if (btn) { btn.textContent = darkMode ? '☀️ Light' : '🌙 Dark'; btn.classList.toggle('on', darkMode); }
+  try { localStorage.setItem('cw_dark', darkMode ? '1' : '0'); } catch {}
+}
+function loadDarkMode() {
+  try {
+    if (localStorage.getItem('cw_dark') === '1') toggleDarkMode();
+  } catch {}
+}
+
+// ── FONT SIZE ─────────────────────────────────────────────────────────────
+let fontLevel = 0; // 0=default, 1=md, 2=lg
+function adjustFont(dir) {
+  fontLevel = Math.max(0, Math.min(2, fontLevel + dir));
+  document.body.classList.remove('fs-md','fs-lg');
+  if (fontLevel === 1) document.body.classList.add('fs-md');
+  if (fontLevel === 2) document.body.classList.add('fs-lg');
+  try { localStorage.setItem('cw_font', fontLevel); } catch {}
+}
+function loadFontSize() {
+  try {
+    const f = parseInt(localStorage.getItem('cw_font') || '0');
+    if (f > 0) { fontLevel = f - 1; adjustFont(1); }
+  } catch {}
+}
+
+// ── BOOKMARKS ─────────────────────────────────────────────────────────────
+let bookmarks = []; // [{title,link,source,pubDate,description}]
+function loadBookmarks() {
+  try { const b = localStorage.getItem('cw_bookmarks'); if (b) bookmarks = JSON.parse(b); } catch {}
+  renderBookmarks();
+}
+function saveBookmarks() {
+  try { localStorage.setItem('cw_bookmarks', JSON.stringify(bookmarks)); } catch {}
+}
+function isBookmarked(link) { return bookmarks.some(b => b.link === link); }
+function toggleBookmark(btn, encoded) {
+  const article = JSON.parse(decodeURIComponent(encoded));
+  if (isBookmarked(article.link)) {
+    bookmarks = bookmarks.filter(b => b.link !== article.link);
+    if (btn) { btn.classList.remove('saved'); btn.style.opacity = '.35'; }
+  } else {
+    bookmarks.unshift(article);
+    if (btn) { btn.classList.add('saved'); btn.style.opacity = '1'; }
+  }
+  saveBookmarks();
+  renderBookmarks();
+}
+function renderBookmarks() {
+  const el = document.getElementById('savedList');
+  if (!el) return;
+  if (!bookmarks.length) {
+    el.innerHTML = '<div class="saved-empty">No saved articles yet.<br>Tap 🔖 on any story.</div>';
+    return;
+  }
+  el.innerHTML = bookmarks.map((a, i) => {
+    const d = encodeURIComponent(JSON.stringify(a));
+    return `<div class="saved-item" onclick="window.open('${esc(a.link)}','_blank')">
+      <div>
+        <div class="saved-item-title">${esc(a.title)}</div>
+        <div class="saved-item-src">${esc(a.source)} · ${timeAgo(a.pubDate)}</div>
+      </div>
+      <button class="saved-rm" title="Remove" onclick="event.stopPropagation();removeBookmark(${i})">×</button>
+    </div>`;
+  }).join('') +
+  `<div class="saved-footer"><button class="saved-clear" onclick="clearBookmarks()">Clear all</button></div>`;
+}
+function removeBookmark(i) {
+  bookmarks.splice(i, 1);
+  saveBookmarks();
+  renderBookmarks();
+  applyFiltersAndRender(activeTab); // refresh bookmark icons on cards
+}
+function clearBookmarks() {
+  bookmarks = [];
+  saveBookmarks();
+  renderBookmarks();
+  applyFiltersAndRender(activeTab);
+}
+
 // ── TAB DRAG-AND-DROP REORDERING ──────────────────────────────────────────
 const DEFAULT_TAB_ORDER = ['world','us','europe','asia','middleeast','africa','latam','politics','business','tech','science','sports','entertainment'];
 let dragSrcTab = null;
@@ -1487,6 +1671,9 @@ function resetTabOrder() {
 // ── INIT ──────────────────────────────────────────────────────────────────
 buildRegions();
 loadPrefs();
+loadDarkMode();
+loadFontSize();
+loadBookmarks();
 loadTabOrder();
 initTabDrag();
 renderFilterChips();
