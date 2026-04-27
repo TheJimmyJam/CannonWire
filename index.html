@@ -171,6 +171,32 @@
         footer a { color:#6b7280; text-decoration:none; margin:0 8px; }
         footer a:hover { color:#9ca3af; }
 
+        /* MODAL */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:#fff; border-radius:10px; width:100%; max-width:680px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+        .modal-head { background:var(--primary); color:#fff; padding:18px 24px; display:flex; align-items:center; justify-content:space-between; border-radius:10px 10px 0 0; border-bottom:3px solid var(--accent); flex-shrink:0; }
+        .modal-title { font:800 16px/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:1px; }
+        .modal-close { background:none; border:none; color:#9ca3af; font-size:22px; cursor:pointer; line-height:1; padding:0; transition:color .15s; }
+        .modal-close:hover { color:#fff; }
+        .modal-body { padding:28px; overflow-y:auto; font:15px/1.75 Georgia,serif; color:var(--text); }
+        .modal-body h2 { font:700 18px/1.3 Arial,sans-serif; color:var(--primary); margin:24px 0 8px; text-transform:uppercase; letter-spacing:.5px; font-size:13px; }
+        .modal-body h2:first-child { margin-top:0; }
+        .modal-body p { margin-bottom:14px; color:#374151; }
+        .modal-body a { color:var(--accent); }
+        .modal-body ul { margin:0 0 14px 20px; color:#374151; }
+        .modal-body ul li { margin-bottom:6px; }
+        .modal-body .highlight { background:#fef2f2; border-left:3px solid var(--accent); padding:14px 18px; border-radius:0 6px 6px 0; margin-bottom:16px; font:700 14px/1.5 Arial,sans-serif; color:var(--primary); }
+        .modal-body .ad-tier { border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:12px; }
+        .modal-body .ad-tier h3 { font:700 14px/1 Arial,sans-serif; color:var(--primary); margin-bottom:6px; }
+        .modal-body .ad-tier .price { font:900 22px/1 Arial,sans-serif; color:var(--accent); margin-bottom:6px; }
+        .modal-body .ad-tier p { font:12px/1.5 Arial,sans-serif; margin:0; }
+        .contact-form input, .contact-form textarea { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:6px; font:14px Arial,sans-serif; color:var(--text); margin-bottom:12px; outline:none; transition:border-color .15s; }
+        .contact-form input:focus, .contact-form textarea:focus { border-color:var(--accent); }
+        .contact-form textarea { height:120px; resize:vertical; }
+        .contact-form button { background:var(--accent); color:#fff; border:none; padding:11px 28px; border-radius:6px; font:700 13px/1 Arial,sans-serif; cursor:pointer; transition:background .15s; }
+        .contact-form button:hover { background:#c1121f; }
+
         /* RESPONSIVE */
         @media(max-width:1100px){ .wrap{grid-template-columns:1fr} .sidebar{display:grid;grid-template-columns:1fr 1fr} }
         @media(max-width:768px) { .grid{grid-template-columns:1fr} .featured{grid-template-columns:1fr} .feat-img,.feat-nimg{height:200px} .sidebar{grid-template-columns:1fr} }
@@ -284,13 +310,30 @@
     </aside>
 </div>
 
+<!-- MODALS -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
 <!-- FOOTER -->
 <footer>
     <div class="foot-logo">Cannon<span>Wire</span></div>
     <p style="font-style:italic;font-size:13px;color:#6b7280;margin-bottom:4px">All the News. None of the Noise.</p>
     <p style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#374151;margin-bottom:10px">AI-powered global news wire</p>
     <p>Content sourced from publicly available RSS feeds worldwide · Auto-updates every 15 minutes</p>
-    <p style="margin-top:8px"><a href="#">About</a><a href="#">Privacy</a><a href="#">Advertise</a><a href="#">Contact</a><a href="#">API</a></p>
+    <p style="margin-top:8px">
+        <a href="#" onclick="openModal('about');return false">About</a>
+        <a href="#" onclick="openModal('privacy');return false">Privacy</a>
+        <a href="#" onclick="openModal('advertise');return false">Advertise</a>
+        <a href="#" onclick="openModal('contact');return false">Contact</a>
+        <a href="#" onclick="openModal('api');return false">API</a>
+    </p>
     <p style="margin-top:10px;color:#374151">© 2026 CannonWire News Aggregator</p>
 </footer>
 
@@ -849,6 +892,173 @@ async function fetchWeather() {
       : '⚠️ Couldn\'t load weather. Try again.';
     document.getElementById('wxDisplay').innerHTML = `<div class="wx-err">${msg}</div>`;
   }
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────────
+const MODAL_CONTENT = {
+  about: {
+    title: 'About CannonWire',
+    body: `
+      <div class="highlight">All the News. None of the Noise. — AI-powered global news wire.</div>
+      <h2>What is CannonWire?</h2>
+      <p>CannonWire is a free, AI-powered global news aggregator that pulls real-time headlines from the world's most trusted news sources — all in one place. No algorithm deciding what you should care about. No clickbait rankings. Just the news, organized by region and topic, updated every 15 minutes.</p>
+      <h2>How It Works</h2>
+      <p>CannonWire continuously monitors publicly available RSS feeds from major news organizations across the globe. Headlines are fetched, deduplicated, and sorted by recency so you always see what's happening right now — not what happened three days ago.</p>
+      <p>Users can filter by region (United States, World, Europe, Asia, Middle East, and more), by topic (Politics, Business, Tech, Sports, Entertainment), toggle individual sources on or off, and block keywords to cut out stories they don't want to see.</p>
+      <h2>Founded</h2>
+      <p>CannonWire was founded in 2026 and is based in Dallas, Texas. It was built with the belief that access to diverse, unfiltered global news should be free and fast for everyone.</p>
+      <h2>Sources</h2>
+      <p>CannonWire aggregates content from BBC, NPR, Reuters, Al Jazeera, ABC News, CBS News, Fox News, CNN, NBC News, USA Today, The Guardian, The New York Times, The Washington Post, The Hill, Axios, AP News, TechCrunch, The Verge, ESPN, Variety, and many more. All content remains the property of the original publishers — CannonWire links directly to source articles.</p>
+    `
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    body: `
+      <p><em>Last updated: April 2026</em></p>
+      <h2>Overview</h2>
+      <p>CannonWire is committed to protecting your privacy. This policy explains what information we collect, how we use it, and your rights regarding your data.</p>
+      <h2>Information We Do Not Collect</h2>
+      <p>CannonWire does not require you to create an account. We do not collect your name, email address, or any personally identifiable information simply by using the site.</p>
+      <h2>Information We May Collect</h2>
+      <ul>
+        <li><strong>Usage data:</strong> Anonymous analytics such as page views, session duration, and general geographic region (country/state level) to help us understand how the site is used.</li>
+        <li><strong>Local preferences:</strong> Settings like your saved zip code for weather are stored locally in your browser and never transmitted to our servers.</li>
+        <li><strong>Advertising:</strong> Third-party ad networks may place cookies on your device to serve relevant advertisements. These cookies are governed by the privacy policies of those ad providers.</li>
+      </ul>
+      <h2>Third-Party Content</h2>
+      <p>CannonWire displays headlines and links sourced from third-party news organizations via publicly available RSS feeds. We do not control the privacy practices of those publishers. When you click a headline, you are navigating to the publisher's website and their privacy policy applies.</p>
+      <h2>Cookies</h2>
+      <p>We may use cookies for analytics and advertising purposes. You can control cookie behavior through your browser settings. Disabling cookies will not affect your ability to read the news on CannonWire.</p>
+      <h2>Children's Privacy</h2>
+      <p>CannonWire is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+      <h2>Contact</h2>
+      <p>Questions about this policy? Email us at <a href="mailto:privacy@cannonwire.com">privacy@cannonwire.com</a>.</p>
+    `
+  },
+  advertise: {
+    title: 'Advertise on CannonWire',
+    body: `
+      <div class="highlight">Reach a global audience of engaged, news-literate readers. CannonWire delivers premium ad placements alongside trusted headlines from around the world.</div>
+      <h2>Why Advertise With Us?</h2>
+      <p>CannonWire attracts readers who are actively seeking out news — not passively scrolling a social feed. Our audience is educated, globally minded, and highly engaged. Your brand appears next to content that matters.</p>
+      <h2>Ad Placements</h2>
+      <div class="ad-tier">
+        <h3>Leaderboard Banner — 728×90</h3>
+        <div class="price">Contact for rates</div>
+        <p>Premium placement at the top of every page, above the fold, visible to every visitor before they scroll.</p>
+      </div>
+      <div class="ad-tier">
+        <h3>Sidebar Rectangle — 300×250</h3>
+        <div class="price">Contact for rates</div>
+        <p>High-visibility sidebar placement alongside Trending Now and the weather widget — in view throughout the reading session.</p>
+      </div>
+      <div class="ad-tier">
+        <h3>Sponsored Section</h3>
+        <div class="price">Contact for rates</div>
+        <p>Brand a full regional or topic tab (e.g. "Business, presented by [Your Brand]"). Maximum visibility with category-relevant audiences.</p>
+      </div>
+      <h2>Get In Touch</h2>
+      <p>Email us at <a href="mailto:advertise@cannonwire.com">advertise@cannonwire.com</a> to request a media kit, audience data, or to discuss custom placements.</p>
+    `
+  },
+  contact: {
+    title: 'Contact Us',
+    body: `
+      <p>We'd love to hear from you — whether it's a bug report, a source suggestion, a partnership inquiry, or just a note to say hello.</p>
+      <h2>Send Us a Message</h2>
+      <div class="contact-form">
+        <input type="text" id="cName" placeholder="Your name">
+        <input type="email" id="cEmail" placeholder="Your email address">
+        <input type="text" id="cSubject" placeholder="Subject">
+        <textarea id="cMessage" placeholder="Your message…"></textarea>
+        <button onclick="submitContact()">Send Message</button>
+      </div>
+      <h2>Other Ways to Reach Us</h2>
+      <ul>
+        <li>General inquiries: <a href="mailto:hello@cannonwire.com">hello@cannonwire.com</a></li>
+        <li>Advertising: <a href="mailto:advertise@cannonwire.com">advertise@cannonwire.com</a></li>
+        <li>Privacy concerns: <a href="mailto:privacy@cannonwire.com">privacy@cannonwire.com</a></li>
+        <li>Press: <a href="mailto:press@cannonwire.com">press@cannonwire.com</a></li>
+      </ul>
+      <p style="font-size:12px;color:#9ca3af">Based in Dallas, Texas · Response time typically within 1–2 business days.</p>
+    `
+  },
+  api: {
+    title: 'CannonWire API',
+    body: `
+      <div class="highlight">The CannonWire API is coming soon — programmatic access to real-time global headlines, filtered by region, topic, or keyword.</div>
+      <h2>What the API Will Offer</h2>
+      <ul>
+        <li>Real-time headline feeds by region and topic</li>
+        <li>Keyword filtering and boolean search</li>
+        <li>JSON responses with headline, source, URL, publish date, and thumbnail</li>
+        <li>Webhooks for breaking news alerts</li>
+        <li>Historical archive access (premium tier)</li>
+      </ul>
+      <h2>Planned Tiers</h2>
+      <div class="ad-tier">
+        <h3>Free Tier</h3>
+        <div class="price" style="color:#16a34a">Free</div>
+        <p>Up to 1,000 requests/day. Access to top headlines by region. Perfect for personal projects and prototyping.</p>
+      </div>
+      <div class="ad-tier">
+        <h3>Developer</h3>
+        <div class="price">$29 / month</div>
+        <p>Up to 50,000 requests/day. Full topic and keyword filtering. Ideal for apps and small products.</p>
+      </div>
+      <div class="ad-tier">
+        <h3>Enterprise</h3>
+        <div class="price">Contact us</div>
+        <p>Unlimited requests. Dedicated infrastructure. SLA guarantee. Custom integrations and white-label options.</p>
+      </div>
+      <h2>Join the Waitlist</h2>
+      <p>The API is currently in private beta. Enter your email below to get early access when we launch.</p>
+      <div class="contact-form">
+        <input type="email" id="apiEmail" placeholder="your@email.com">
+        <button onclick="submitApiWaitlist()">Join Waitlist</button>
+      </div>
+    `
+  }
+};
+
+function openModal(key) {
+  const content = MODAL_CONTENT[key];
+  if (!content) return;
+  document.getElementById('modalTitle').textContent = content.title;
+  document.getElementById('modalBody').innerHTML    = content.body;
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function submitContact() {
+  const name    = document.getElementById('cName')?.value.trim();
+  const email   = document.getElementById('cEmail')?.value.trim();
+  const message = document.getElementById('cMessage')?.value.trim();
+  if (!name || !email || !message) {
+    alert('Please fill in your name, email, and message.');
+    return;
+  }
+  document.getElementById('modalBody').innerHTML = `
+    <div style="text-align:center;padding:40px 20px">
+      <div style="font-size:48px;margin-bottom:16px">✅</div>
+      <p style="font:700 18px Arial,sans-serif;color:var(--primary);margin-bottom:8px">Message received!</p>
+      <p style="color:#6b7280">Thanks, ${esc(name)}. We'll get back to you at ${esc(email)} within 1–2 business days.</p>
+    </div>`;
+}
+
+function submitApiWaitlist() {
+  const email = document.getElementById('apiEmail')?.value.trim();
+  if (!email || !email.includes('@')) { alert('Please enter a valid email address.'); return; }
+  document.getElementById('apiEmail').closest('.contact-form').innerHTML = `
+    <p style="color:#16a34a;font:700 14px Arial,sans-serif">✅ You're on the list! We'll email ${esc(email)} when the API launches.</p>`;
 }
 
 // ── RENDER: REGION LINKS ──────────────────────────────────────────────────
