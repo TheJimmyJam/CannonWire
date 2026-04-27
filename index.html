@@ -30,6 +30,7 @@
         .hdr-left { display:flex; flex-direction:column; gap:4px; }
         .logo { font: 900 36px/1 'Arial Black',Arial,sans-serif; color:#fff; letter-spacing:-2px; text-transform:uppercase; }
         .logo span { color: var(--accent); }
+        .logo-img { height:70px; width:auto; display:block; background:#fff; border-radius:6px; padding:4px 10px; }
         .hdr-tagline { color:#e5e7eb; font: italic 700 14px/1 Georgia,serif; letter-spacing:.2px; }
         .hdr-sub { color:#4b5563; font:700 10px/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; }
         .hdr-right { text-align:right; }
@@ -214,6 +215,7 @@
         .splash-top { background:var(--primary); padding:22px 28px; border-bottom:3px solid var(--accent); display:flex; align-items:center; justify-content:space-between; }
         .splash-logo { font:900 28px/1 'Arial Black',Arial,sans-serif; color:#fff; letter-spacing:-1.5px; text-transform:uppercase; }
         .splash-logo span { color:var(--accent); }
+        .splash-logo-img { height:48px; width:auto; display:block; filter:brightness(0) invert(1); }
         .splash-tagline { font:italic 12px Georgia,serif; color:#6b7280; margin-top:3px; }
         .splash-progress { display:flex; align-items:center; gap:8px; }
         .splash-prog-label { font:700 10px Arial,sans-serif; color:#9ca3af; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
@@ -292,9 +294,7 @@
 <!-- HEADER -->
 <header>
     <div class="hdr-left">
-        <div class="logo">Cannon<span>Wire</span></div>
-        <div class="hdr-tagline">All the News. None of the Noise.</div>
-        <div class="hdr-sub">AI-powered global news wire</div>
+        <img src="CannonWire Logo.png" alt="CannonWire" class="logo-img">
     </div>
     <div class="hdr-right">
         <div class="hdr-date" id="hdrDate">—</div>
