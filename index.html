@@ -207,6 +207,36 @@
         .contact-form button { background:var(--accent); color:#fff; border:none; padding:11px 28px; border-radius:6px; font:700 13px/1 Arial,sans-serif; cursor:pointer; transition:background .15s; }
         .contact-form button:hover { background:#c1121f; }
 
+        /* WELCOME SPLASH */
+        .splash { position:fixed; inset:0; z-index:2000; background:rgba(8,14,28,.92); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; transition:opacity .5s ease; }
+        .splash.hiding { opacity:0; pointer-events:none; }
+        .splash-card { background:#fff; border-radius:14px; width:100%; max-width:520px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,.5); }
+        .splash-top { background:var(--primary); padding:22px 28px; border-bottom:3px solid var(--accent); display:flex; align-items:center; justify-content:space-between; }
+        .splash-logo { font:900 28px/1 'Arial Black',Arial,sans-serif; color:#fff; letter-spacing:-1.5px; text-transform:uppercase; }
+        .splash-logo span { color:var(--accent); }
+        .splash-tagline { font:italic 12px Georgia,serif; color:#6b7280; margin-top:3px; }
+        .splash-progress { display:flex; align-items:center; gap:8px; }
+        .splash-prog-label { font:700 10px Arial,sans-serif; color:#9ca3af; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+        .splash-prog-bar { width:80px; height:4px; background:#1e3a5f; border-radius:4px; overflow:hidden; }
+        .splash-prog-fill { height:100%; background:var(--accent); border-radius:4px; transition:width .4s ease; width:0%; }
+        .splash-body { padding:24px 28px; }
+        .splash-trivia-label { font:800 10px Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); margin-bottom:10px; }
+        .splash-question { font:700 16px/1.5 Georgia,serif; color:var(--primary); margin-bottom:16px; }
+        .splash-answers { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+        .splash-answer { background:#f8f8f2; border:2px solid var(--border); border-radius:8px; padding:10px 12px; font:600 13px/1.35 Arial,sans-serif; color:var(--text); cursor:pointer; transition:all .15s; text-align:left; }
+        .splash-answer:hover:not(:disabled) { border-color:var(--primary); background:#eef; }
+        .splash-answer.correct { background:#dcfce7; border-color:#16a34a; color:#15803d; }
+        .splash-answer.wrong   { background:#fee2e2; border-color:#dc2626; color:#dc2626; }
+        .splash-answer:disabled { cursor:default; }
+        .splash-result { font:700 13px Arial,sans-serif; margin-bottom:14px; min-height:18px; }
+        .splash-result.win { color:#16a34a; }
+        .splash-result.lose { color:#dc2626; }
+        .splash-footer { display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid var(--border); }
+        .splash-status { font:12px Arial,sans-serif; color:#9ca3af; }
+        .splash-skip { background:var(--accent); color:#fff; border:none; padding:9px 20px; border-radius:6px; font:700 12px Arial,sans-serif; cursor:pointer; transition:background .15s; }
+        .splash-skip:hover { background:#c1121f; }
+        .splash-loading-q { font:italic 13px Georgia,serif; color:#9ca3af; padding:20px 0; text-align:center; }
+
         /* RESPONSIVE */
         @media(max-width:1100px){ .wrap{grid-template-columns:1fr} .sidebar{display:grid;grid-template-columns:1fr 1fr} }
         @media(max-width:768px) { .grid{grid-template-columns:1fr} .featured{grid-template-columns:1fr} .feat-img,.feat-nimg{height:200px} .sidebar{grid-template-columns:1fr} }
@@ -214,6 +244,30 @@
     </style>
 </head>
 <body>
+
+<!-- WELCOME SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-card">
+    <div class="splash-top">
+      <div>
+        <div class="splash-logo">Cannon<span>Wire</span></div>
+        <div class="splash-tagline">All the News. None of the Noise.</div>
+      </div>
+      <div class="splash-progress">
+        <span class="splash-prog-label" id="splashLabel">Loading…</span>
+        <div class="splash-prog-bar"><div class="splash-prog-fill" id="splashFill"></div></div>
+      </div>
+    </div>
+    <div class="splash-body">
+      <div class="splash-trivia-label">🧠 While you wait — Daily Trivia</div>
+      <div id="splashTriviaInner"><div class="splash-loading-q">Fetching today's question…</div></div>
+      <div class="splash-footer">
+        <span class="splash-status" id="splashStatus">Connecting to news sources…</span>
+        <button class="splash-skip" onclick="hideSplash()">Start Reading →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- TICKER -->
 <div class="ticker-wrap"><div class="ticker-track" id="ticker"><span class="tick">Loading headlines…</span></div></div>
@@ -619,30 +673,46 @@ async function fetchFeed(source) {
   return [];
 }
 
-// ── LOAD TAB ──────────────────────────────────────────────────────────────
+// ── LOAD TAB (progressive rendering) ─────────────────────────────────────
 async function loadTab(tab) {
   activeTab = tab;
-  const cfg = TABS[tab];
+  const cfg   = TABS[tab];
+  const total = cfg.feeds.length;
+  let   done  = 0;
+
   document.getElementById('secTitle').textContent = cfg.icon + ' ' + cfg.label;
   document.getElementById('newsGrid').innerHTML   = `<div class="loading"><div class="spin"></div>Fetching ${cfg.label} headlines…</div>`;
 
-  // Init toggle state for this tab (preserve if already set)
   if (!srcToggles[tab]) {
     srcToggles[tab] = {};
     cfg.feeds.forEach(f => srcToggles[tab][f.name] = true);
   }
-
-  // Init cache bucket
   tabCache[tab] = tabCache[tab] || {};
 
-  // Fetch all feeds in parallel, store per-source
+  // Fire all feeds simultaneously; render as each one arrives
   await Promise.all(cfg.feeds.map(async feed => {
     const articles = await fetchFeed(feed);
     tabCache[tab][feed.name] = articles;
+    done++;
+
+    // Update splash progress bar
+    const pct = Math.round((done / total) * 100);
+    const fill = document.getElementById('splashFill');
+    const lbl  = document.getElementById('splashLabel');
+    const stat = document.getElementById('splashStatus');
+    if (fill) fill.style.width = pct + '%';
+    if (lbl)  lbl.textContent  = `${done}/${total}`;
+    if (stat) stat.textContent = done < total
+      ? `Loaded ${done} of ${total} sources…`
+      : `All ${total} sources ready!`;
+
+    // Render as soon as first source is back — no more blank wait
+    applyFiltersAndRender(tab);
+    renderSources(tab);
   }));
 
-  renderSources(tab);
-  applyFiltersAndRender(tab);
+  // Auto-hide splash once everything is loaded
+  hideSplash();
 }
 
 // ── FILTER + RENDER from cache ─────────────────────────────────────────────
@@ -800,6 +870,78 @@ function renderSources(tab) {
         <button style="color:var(--muted)" onclick="setAllSources('${tab}',false)">None</button>
       </span>
     </div>`;
+}
+
+// ── WELCOME SPLASH ────────────────────────────────────────────────────────
+let splashDismissed = false;
+
+function hideSplash() {
+  if (splashDismissed) return;
+  splashDismissed = true;
+  const el = document.getElementById('splash');
+  if (!el) return;
+  el.classList.add('hiding');
+  setTimeout(() => { el.style.display = 'none'; }, 520);
+}
+
+function decodeHtml(str) {
+  const d = document.createElement('textarea');
+  d.innerHTML = str;
+  return d.value;
+}
+
+function shuffle(arr) {
+  return arr.map(v => [Math.random(), v]).sort((a,b) => a[0]-b[0]).map(v => v[1]);
+}
+
+async function fetchTrivia() {
+  try {
+    const res  = await fetch('https://opentdb.com/api.php?amount=1&type=multiple', { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    const q    = data.results[0];
+
+    const question  = decodeHtml(q.question);
+    const correct   = decodeHtml(q.correct_answer);
+    const answers   = shuffle([correct, ...q.incorrect_answers.map(decodeHtml)]);
+    const category  = decodeHtml(q.category);
+    const diff      = q.difficulty;
+
+    const diffColor = { easy:'#16a34a', medium:'#d97706', hard:'#dc2626' }[diff] || '#6b7280';
+
+    document.getElementById('splashTriviaInner').innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+        <span style="font:600 10px Arial,sans-serif;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">${category}</span>
+        <span style="font:700 10px Arial,sans-serif;color:${diffColor};text-transform:uppercase;letter-spacing:.5px;background:${diffColor}18;padding:2px 7px;border-radius:10px">${diff}</span>
+      </div>
+      <div class="splash-question">${question}</div>
+      <div class="splash-answers" id="triviaAnswers">
+        ${answers.map(a => `
+          <button class="splash-answer" onclick="answerTrivia(this,'${esc(a)}','${esc(correct)}')">${a}</button>
+        `).join('')}
+      </div>
+      <div class="splash-result" id="triviaResult"></div>`;
+  } catch {
+    document.getElementById('splashTriviaInner').innerHTML =
+      `<div class="splash-loading-q">Couldn't load trivia today — the news awaits!</div>`;
+  }
+}
+
+function answerTrivia(btn, chosen, correct) {
+  const buttons = document.querySelectorAll('.splash-answer');
+  buttons.forEach(b => {
+    b.disabled = true;
+    if (b.textContent.trim() === correct) b.classList.add('correct');
+  });
+  const result = document.getElementById('triviaResult');
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    result.textContent = '✅ Correct! Nice work.';
+    result.className = 'splash-result win';
+  } else {
+    btn.classList.add('wrong');
+    result.textContent = `❌ Not quite — the answer was: ${correct}`;
+    result.className = 'splash-result lose';
+  }
 }
 
 // ── BLOCK FILTER ──────────────────────────────────────────────────────────
@@ -1181,9 +1323,10 @@ tick(); setInterval(tick, 30000);
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 buildRegions();
-loadPrefs();        // restore saved filters + zip before first render
+loadPrefs();
 renderFilterChips();
-loadTab('us');
+fetchTrivia();      // load trivia question into splash while feeds warm up
+loadTab('us');      // feeds load progressively in background
 </script>
 </body>
 </html>
