@@ -42,11 +42,19 @@
 
         /* NAV */
         nav { background:var(--primary); border-top:1px solid #1a2f50; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,.3); }
-        .tabs { display:flex; list-style:none; padding:0 20px; overflow-x:auto; scrollbar-width:none; }
+        .tabs { display:flex; list-style:none; padding:0 20px; overflow-x:auto; scrollbar-width:none; align-items:stretch; }
         .tabs::-webkit-scrollbar { display:none; }
-        .tabs button { display:block; padding:11px 16px; background:none; border:none; color:#9ca3af; font:700 12px/1 Arial,sans-serif; letter-spacing:.6px; cursor:pointer; text-transform:uppercase; border-bottom:3px solid transparent; transition:color .15s; white-space:nowrap; }
+        .tabs li { display:flex; align-items:stretch; position:relative; }
+        .tabs li.drag-over { border-left:3px solid var(--accent); margin-left:-3px; }
+        .tabs li.dragging { opacity:.35; }
+        .tabs button { display:flex; align-items:center; gap:5px; padding:11px 14px; background:none; border:none; color:#9ca3af; font:700 12px/1 Arial,sans-serif; letter-spacing:.6px; cursor:pointer; text-transform:uppercase; border-bottom:3px solid transparent; transition:color .15s; white-space:nowrap; }
         .tabs button:hover { color:#e5e7eb; }
         .tabs button.active { color:#fff; border-bottom-color:var(--accent); }
+        .tab-grip { display:none; font-size:10px; color:#4b5563; cursor:grab; line-height:1; padding:0 2px 0 0; transition:color .15s; }
+        .tabs li:hover .tab-grip { display:block; }
+        .tab-grip:active { cursor:grabbing; }
+        .tabs-reset { background:none; border:none; color:#4b5563; font:600 10px/1 Arial,sans-serif; cursor:pointer; padding:8px 12px; white-space:nowrap; letter-spacing:.5px; text-transform:uppercase; transition:color .15s; align-self:center; flex-shrink:0; }
+        .tabs-reset:hover { color:#9ca3af; }
 
         /* LAYOUT */
         .wrap { max-width:1440px; margin:0 auto; padding:24px 20px; display:grid; grid-template-columns:1fr 310px; gap:28px; }
@@ -327,20 +335,21 @@
 <!-- NAV -->
 <nav>
     <ul class="tabs" id="tabList">
-        <li><button class="active" data-tab="world">🌍 World</button></li>
-        <li><button data-tab="us">🇺🇸 United States</button></li>
-        <li><button data-tab="europe">🇪🇺 Europe</button></li>
-        <li><button data-tab="asia">🌏 Asia</button></li>
-        <li><button data-tab="middleeast">🕌 Middle East</button></li>
-        <li><button data-tab="africa">🌍 Africa</button></li>
-        <li><button data-tab="latam">🌎 Latin America</button></li>
-        <li><button data-tab="politics">🏛️ Politics</button></li>
-        <li><button data-tab="business">📈 Business</button></li>
-        <li><button data-tab="tech">💻 Technology</button></li>
-        <li><button data-tab="science">🔬 Science</button></li>
-        <li><button data-tab="sports">⚽ Sports</button></li>
-        <li><button data-tab="entertainment">🎬 Entertainment</button></li>
+        <li draggable="true" data-tab="world"><button class="active" data-tab="world"><span class="tab-grip">⠿</span>🌍 World</button></li>
+        <li draggable="true" data-tab="us"><button data-tab="us"><span class="tab-grip">⠿</span>🇺🇸 United States</button></li>
+        <li draggable="true" data-tab="europe"><button data-tab="europe"><span class="tab-grip">⠿</span>🇪🇺 Europe</button></li>
+        <li draggable="true" data-tab="asia"><button data-tab="asia"><span class="tab-grip">⠿</span>🌏 Asia</button></li>
+        <li draggable="true" data-tab="middleeast"><button data-tab="middleeast"><span class="tab-grip">⠿</span>🕌 Middle East</button></li>
+        <li draggable="true" data-tab="africa"><button data-tab="africa"><span class="tab-grip">⠿</span>🌍 Africa</button></li>
+        <li draggable="true" data-tab="latam"><button data-tab="latam"><span class="tab-grip">⠿</span>🌎 Latin America</button></li>
+        <li draggable="true" data-tab="politics"><button data-tab="politics"><span class="tab-grip">⠿</span>🏛️ Politics</button></li>
+        <li draggable="true" data-tab="business"><button data-tab="business"><span class="tab-grip">⠿</span>📈 Business</button></li>
+        <li draggable="true" data-tab="tech"><button data-tab="tech"><span class="tab-grip">⠿</span>💻 Technology</button></li>
+        <li draggable="true" data-tab="science"><button data-tab="science"><span class="tab-grip">⠿</span>🔬 Science</button></li>
+        <li draggable="true" data-tab="sports"><button data-tab="sports"><span class="tab-grip">⠿</span>⚽ Sports</button></li>
+        <li draggable="true" data-tab="entertainment"><button data-tab="entertainment"><span class="tab-grip">⠿</span>🎬 Entertainment</button></li>
     </ul>
+    <button class="tabs-reset" id="tabsResetBtn" onclick="resetTabOrder()" style="display:none" title="Reset tab order">↺ Reset</button>
 </nav>
 
 <!-- PAGE -->
@@ -1391,9 +1400,84 @@ function tick() {
 }
 tick(); setInterval(tick, 30000);
 
+// ── TAB DRAG-AND-DROP REORDERING ──────────────────────────────────────────
+const DEFAULT_TAB_ORDER = ['world','us','europe','asia','middleeast','africa','latam','politics','business','tech','science','sports','entertainment'];
+let dragSrcTab = null;
+
+function initTabDrag() {
+  const list = document.getElementById('tabList');
+  list.querySelectorAll('li[draggable]').forEach(li => {
+    li.addEventListener('dragstart', e => {
+      dragSrcTab = li;
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', li.dataset.tab);
+    });
+    li.addEventListener('dragend', () => {
+      dragSrcTab = null;
+      list.querySelectorAll('li').forEach(el => el.classList.remove('dragging','drag-over'));
+    });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (li !== dragSrcTab) {
+        list.querySelectorAll('li').forEach(el => el.classList.remove('drag-over'));
+        li.classList.add('drag-over');
+      }
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!dragSrcTab || dragSrcTab === li) return;
+      li.classList.remove('drag-over');
+      // Insert before or after based on horizontal position
+      const rect = li.getBoundingClientRect();
+      const after = e.clientX > rect.left + rect.width / 2;
+      if (after) li.after(dragSrcTab);
+      else li.before(dragSrcTab);
+      saveTabOrder();
+    });
+  });
+}
+
+function saveTabOrder() {
+  const order = [...document.querySelectorAll('#tabList li[data-tab]')].map(li => li.dataset.tab);
+  try { localStorage.setItem('cw_tab_order', JSON.stringify(order)); } catch {}
+  // Show reset button if order differs from default
+  const isDefault = order.every((t, i) => t === DEFAULT_TAB_ORDER[i]);
+  document.getElementById('tabsResetBtn').style.display = isDefault ? 'none' : 'block';
+}
+
+function loadTabOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cw_tab_order'));
+    if (!saved || !Array.isArray(saved)) return;
+    const list = document.getElementById('tabList');
+    saved.forEach(tab => {
+      const li = list.querySelector(`li[data-tab="${tab}"]`);
+      if (li) list.appendChild(li);
+    });
+    // Show reset button if order differs
+    const isDefault = saved.every((t, i) => t === DEFAULT_TAB_ORDER[i]);
+    document.getElementById('tabsResetBtn').style.display = isDefault ? 'none' : 'block';
+  } catch {}
+}
+
+function resetTabOrder() {
+  const list = document.getElementById('tabList');
+  DEFAULT_TAB_ORDER.forEach(tab => {
+    const li = list.querySelector(`li[data-tab="${tab}"]`);
+    if (li) list.appendChild(li);
+  });
+  try { localStorage.removeItem('cw_tab_order'); } catch {}
+  document.getElementById('tabsResetBtn').style.display = 'none';
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────
 buildRegions();
 loadPrefs();
+loadTabOrder();
+initTabDrag();
 renderFilterChips();
 fetchTrivia();      // load trivia question into splash while feeds warm up
 loadTab('world');   // feeds load progressively in background
