@@ -327,8 +327,8 @@
 <!-- NAV -->
 <nav>
     <ul class="tabs" id="tabList">
-        <li><button class="active" data-tab="us">🇺🇸 United States</button></li>
-        <li><button data-tab="world">🌍 World</button></li>
+        <li><button class="active" data-tab="world">🌍 World</button></li>
+        <li><button data-tab="us">🇺🇸 United States</button></li>
         <li><button data-tab="europe">🇪🇺 Europe</button></li>
         <li><button data-tab="asia">🌏 Asia</button></li>
         <li><button data-tab="middleeast">🕌 Middle East</button></li>
@@ -347,7 +347,7 @@
 <div class="wrap">
     <main>
         <div class="sec-head">
-            <span class="sec-title" id="secTitle">🇺🇸 United States</span>
+            <span class="sec-title" id="secTitle">🌍 World</span>
             <div style="display:flex;align-items:center;gap:10px">
                 <div class="view-toggle">
                     <button class="vt-btn active" id="vtGrid" onclick="setViewMode('grid')" title="Grid view">⊞ Grid</button>
@@ -545,7 +545,7 @@ const PROXIES = [
   u => `https://thingproxy.freeboard.io/fetch/${u}`,
 ];
 
-let activeTab = 'us';
+let activeTab = 'world';
 const tabCache    = {};   // tabCache[tab][sourceName]  = articles[]
 const srcToggles  = {};   // srcToggles[tab][sourceName] = true/false
 
@@ -1396,7 +1396,7 @@ buildRegions();
 loadPrefs();
 renderFilterChips();
 fetchTrivia();      // load trivia question into splash while feeds warm up
-loadTab('us');      // feeds load progressively in background
+loadTab('world');   // feeds load progressively in background
 </script>
 </body>
 </html>
