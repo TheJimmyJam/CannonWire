@@ -26,13 +26,20 @@
         @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 
         /* HEADER */
-        header { background: var(--primary); padding: 16px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom: 3px solid var(--accent); }
+        header { background: var(--primary); padding: 16px 28px; display:flex; align-items:center; justify-content:space-between; gap:24px; border-bottom: 3px solid var(--accent); }
+        .hdr-center { flex:1; text-align:center; }
+        .hdr-center-tagline { font:900 42px/1 'Arial Black',Arial,sans-serif; color:#fff; letter-spacing:-2px; text-transform:uppercase; white-space:nowrap; }
+        .hdr-center-tagline span { color:var(--accent); }
+        .hdr-center-sub { font:700 11px/1 Arial,sans-serif; color:#4b5563; text-transform:uppercase; letter-spacing:2px; margin-top:6px; }
         .hdr-left { display:flex; flex-direction:column; gap:4px; }
         .logo { font: 900 36px/1 'Arial Black',Arial,sans-serif; color:#fff; letter-spacing:-2px; text-transform:uppercase; }
         .logo span { color: var(--accent); }
         .logo-img { height:70px; width:auto; display:block; background:#fff; border-radius:6px; padding:4px 10px; }
         .hdr-tagline { color:#e5e7eb; font: italic 700 14px/1 Georgia,serif; letter-spacing:.2px; }
         .hdr-sub { color:#4b5563; font:700 10px/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:1.5px; }
+        .tagline-banner { background:var(--bg); border-bottom:1px solid var(--border); padding:18px 28px; text-align:center; }
+        .tagline-banner-text { font:900 38px/1.1 'Arial Black',Arial,sans-serif; color:var(--primary); letter-spacing:-1.5px; text-transform:uppercase; }
+        .tagline-banner-text span { color:var(--accent); }
         .hdr-right { text-align:right; }
         .hdr-date  { color:#9ca3af; font:12px/1.4 Arial,sans-serif; }
 
@@ -303,8 +310,10 @@
 <header>
     <div class="hdr-left">
         <img src="CannonWire Logo.png" alt="CannonWire" class="logo-img">
-        <div class="hdr-tagline">All the News. None of the Noise.</div>
-        <div class="hdr-sub">AI-powered global news wire</div>
+    </div>
+    <div class="hdr-center">
+        <div class="hdr-center-tagline">All the News.<span> None of the Noise.</span></div>
+        <div class="hdr-center-sub">AI-powered global news wire</div>
     </div>
     <div class="hdr-right">
         <div class="hdr-date" id="hdrDate">—</div>
