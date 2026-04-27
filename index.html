@@ -237,6 +237,23 @@
         .splash-skip:hover { background:#c1121f; }
         .splash-loading-q { font:italic 13px Georgia,serif; color:#9ca3af; padding:20px 0; text-align:center; }
 
+        /* VIEW TOGGLE */
+        .view-toggle { display:flex; align-items:center; gap:6px; }
+        .vt-btn { background:none; border:1px solid #d1d5db; padding:5px 10px; font:700 11px/1 Arial,sans-serif; cursor:pointer; border-radius:4px; color:var(--muted); transition:all .15s; }
+        .vt-btn:hover { background:#e5e7eb; }
+        .vt-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+        /* HEADLINE LIST VIEW */
+        .headline-list { display:flex; flex-direction:column; }
+        .hl-item { display:flex; align-items:baseline; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; transition:background .1s; }
+        .hl-item:first-child { padding-top:4px; }
+        .hl-item:last-child { border-bottom:none; }
+        .hl-item:hover { background:#fafaf5; margin:0 -8px; padding-left:8px; padding-right:8px; }
+        .hl-num { font:900 12px/1 'Arial Black',Arial,sans-serif; color:#d1d5db; min-width:24px; flex-shrink:0; }
+        .hl-src { font:800 10px/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:.8px; color:var(--accent); white-space:nowrap; flex-shrink:0; min-width:80px; }
+        .hl-title { font:700 14px/1.45 Georgia,serif; color:var(--text); flex:1; }
+        .hl-time { font:600 10px/1 Arial,sans-serif; color:#9ca3af; white-space:nowrap; flex-shrink:0; }
+
         /* RESPONSIVE */
         @media(max-width:1100px){ .wrap{grid-template-columns:1fr} .sidebar{display:grid;grid-template-columns:1fr 1fr} }
         @media(max-width:768px) { .grid{grid-template-columns:1fr} .featured{grid-template-columns:1fr} .feat-img,.feat-nimg{height:200px} .sidebar{grid-template-columns:1fr} }
@@ -331,7 +348,13 @@
     <main>
         <div class="sec-head">
             <span class="sec-title" id="secTitle">🇺🇸 United States</span>
-            <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">↻ Refresh</button>
+            <div style="display:flex;align-items:center;gap:10px">
+                <div class="view-toggle">
+                    <button class="vt-btn active" id="vtGrid" onclick="setViewMode('grid')" title="Grid view">⊞ Grid</button>
+                    <button class="vt-btn" id="vtList" onclick="setViewMode('list')" title="Headline list">≡ List</button>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">↻ Refresh</button>
+            </div>
         </div>
         <div class="grid" id="newsGrid">
             <div class="loading"><div class="spin"></div>Fetching headlines…</div>
@@ -526,17 +549,21 @@ let activeTab = 'us';
 const tabCache    = {};   // tabCache[tab][sourceName]  = articles[]
 const srcToggles  = {};   // srcToggles[tab][sourceName] = true/false
 
-// Persist blocked terms + weather zip in localStorage (no account needed)
+// Persist blocked terms + weather zip + view mode in localStorage (no account needed)
 let blockedTerms = [];
+let viewMode = 'grid'; // 'grid' or 'list'
 function savePrefs() {
   try {
     localStorage.setItem('cw_blocked', JSON.stringify(blockedTerms));
+    localStorage.setItem('cw_view', viewMode);
   } catch {}
 }
 function loadPrefs() {
   try {
     const b = localStorage.getItem('cw_blocked');
     if (b) blockedTerms = JSON.parse(b);
+    const v = localStorage.getItem('cw_view');
+    if (v === 'list') { viewMode = 'list'; syncViewButtons(); }
     const z = localStorage.getItem('cw_zip');
     if (z) {
       document.getElementById('wxZip').value = z;
@@ -748,7 +775,8 @@ function applyFiltersAndRender(tab) {
   const hidden = totalBefore - articles.length;
   updateFilterStats(hidden);
 
-  renderGrid(articles);
+  if (viewMode === 'list') renderList(articles);
+  else renderGrid(articles);
   renderTrending(articles.slice(0, 8));
   renderTicker(articles.slice(0, 30));
 }
@@ -787,6 +815,7 @@ function imgEl(url, h, sourceName) {
 
 function renderGrid(articles) {
   const g = document.getElementById('newsGrid');
+  g.className = 'grid';
   if (!articles.length) {
     g.innerHTML = `<div class="err"><p style="font-size:32px;margin-bottom:12px">⚠️</p>
       <p>No articles loaded. The feeds may be temporarily unavailable.</p>
@@ -818,6 +847,47 @@ function renderGrid(articles) {
       </div>`;
   });
   g.innerHTML = html;
+}
+
+// ── RENDER: HEADLINE LIST ─────────────────────────────────────────────────
+function renderList(articles) {
+  const g = document.getElementById('newsGrid');
+  g.className = 'headline-list';
+  if (!articles.length) {
+    g.innerHTML = `<div class="err" style="grid-column:unset"><p style="font-size:32px;margin-bottom:12px">⚠️</p>
+      <p>No articles loaded. The feeds may be temporarily unavailable.</p>
+      <button class="err-btn" onclick="doRefresh()">Try Again</button></div>`;
+    return;
+  }
+  g.innerHTML = articles.slice(0, 60).map((a, i) => `
+    <div class="hl-item" onclick="window.open('${esc(a.link)}','_blank')">
+      <span class="hl-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="hl-src">${esc(a.source)}</span>
+      <span class="hl-title">${esc(a.title)}</span>
+      <span class="hl-time">${timeAgo(a.pubDate)}</span>
+    </div>`).join('');
+}
+
+// ── VIEW MODE TOGGLE ──────────────────────────────────────────────────────
+function setViewMode(mode) {
+  viewMode = mode;
+  syncViewButtons();
+  savePrefs();
+  applyFiltersAndRender(activeTab);
+}
+function syncViewButtons() {
+  const gBtn = document.getElementById('vtGrid');
+  const lBtn = document.getElementById('vtList');
+  if (!gBtn || !lBtn) return;
+  if (viewMode === 'list') {
+    gBtn.classList.remove('active');
+    lBtn.classList.add('active');
+    document.getElementById('newsGrid').className = 'headline-list';
+  } else {
+    lBtn.classList.remove('active');
+    gBtn.classList.add('active');
+    document.getElementById('newsGrid').className = 'grid';
+  }
 }
 
 // ── RENDER: TRENDING ──────────────────────────────────────────────────────
