@@ -300,6 +300,20 @@
         .splash-skip:hover { background:#c1121f; }
         .splash-loading-q { font:italic 13px Georgia,serif; color:#9ca3af; padding:20px 0; text-align:center; }
 
+        /* SHARE */
+        .share-btn { background:rgba(0,0,0,.45); border:none; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:13px; transition:background .15s, transform .15s; z-index:2; position:absolute; top:8px; right:42px; }
+        .share-btn:hover { background:rgba(0,0,0,.7); transform:scale(1.1); }
+        .share-popover { position:fixed; background:var(--card); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.18); padding:6px; z-index:500; display:none; flex-direction:column; gap:2px; min-width:150px; }
+        .share-popover.open { display:flex; }
+        .share-opt { display:flex; align-items:center; gap:9px; padding:8px 12px; border-radius:5px; cursor:pointer; font:600 12px/1 Arial,sans-serif; color:var(--text); border:none; background:none; width:100%; text-align:left; transition:background .1s; }
+        .share-opt:hover { background:var(--bg); }
+        .share-opt-icon { font-size:15px; width:18px; text-align:center; flex-shrink:0; }
+        /* TOAST */
+        .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(10px); background:#1d2433; color:#fff; font:700 13px/1 Arial,sans-serif; padding:10px 20px; border-radius:24px; z-index:9999; opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; white-space:nowrap; }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        /* STREAK */
+        .streak-badge { display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg,#ea580c,#dc2626); color:#fff; font:700 11px/1 Arial,sans-serif; padding:4px 10px; border-radius:20px; letter-spacing:.3px; white-space:nowrap; }
+
         /* BOOKMARK */
         .bm-btn { position:absolute; top:8px; right:8px; background:rgba(0,0,0,.45); border:none; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; transition:background .15s, transform .15s; z-index:2; }
         .bm-btn:hover { background:rgba(0,0,0,.7); transform:scale(1.1); }
@@ -421,6 +435,7 @@
             <button class="hdr-ctrl-btn" onclick="adjustFont(1)" title="Larger text">A+</button>
         </div>
         <div class="hdr-date" id="hdrDate">—</div>
+        <div id="streakBadge" style="display:none"></div>
     </div>
 </header>
 
@@ -569,6 +584,14 @@
         </div>
     </aside>
 </div>
+
+<!-- SHARE POPOVER -->
+<div class="share-popover" id="sharePopover">
+  <button class="share-opt" onclick="shareToX()"><span class="share-opt-icon">𝕏</span> Post on X</button>
+  <button class="share-opt" onclick="shareToFacebook()"><span class="share-opt-icon">📘</span> Share on Facebook</button>
+  <button class="share-opt" onclick="copyShareLink()"><span class="share-opt-icon">🔗</span> Copy Link</button>
+</div>
+<div class="toast" id="toast"></div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
@@ -952,7 +975,11 @@ function imgEl(url, h, sourceName) {
 function bmBtn(a) {
   const saved = isBookmarked(a.link);
   const d = encodeURIComponent(JSON.stringify({title:a.title,link:a.link,source:a.source,pubDate:a.pubDate,description:a.description}));
-  return `<button class="bm-btn${saved?' saved':''}" title="${saved?'Remove bookmark':'Save for later'}" onclick="event.stopPropagation();toggleBookmark(this,'${d}')">${saved?'🔖':'🔖'}</button>`;
+  const tEnc = encodeURIComponent(a.title);
+  const lEnc = encodeURIComponent(a.link);
+  return `
+    <button class="share-btn" title="Share article" onclick="event.stopPropagation();openShareMenu(this,'${tEnc}','${lEnc}')">↗</button>
+    <button class="bm-btn${saved?' saved':''}" title="${saved?'Remove bookmark':'Save for later'}" onclick="event.stopPropagation();toggleBookmark(this,'${d}')">${saved?'🔖':'🔖'}</button>`;
 }
 
 function renderGrid(articles) {
@@ -1012,6 +1039,7 @@ function renderList(articles) {
       <span class="hl-src">${esc(a.source)}</span>
       <span class="hl-title">${esc(a.title)}</span>
       <span class="hl-time">${readTime(a.description)} · ${timeAgo(a.pubDate)}</span>
+      <button style="background:none;border:none;cursor:pointer;font-size:12px;padding:0 4px;color:var(--muted);transition:color .15s" title="Share" onclick="event.stopPropagation();openShareMenu(this,'${encodeURIComponent(a.title)}','${encodeURIComponent(a.link)}')">↗</button>
       <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 4px;opacity:${saved?1:.35};transition:opacity .15s" title="${saved?'Remove':'Save'}" onclick="event.stopPropagation();toggleBookmark(this,'${d}')">${saved?'🔖':'🔖'}</button>
     </div>`;
   }).join('');
@@ -1801,6 +1829,95 @@ function clearBookmarks() {
   applyFiltersAndRender(activeTab);
 }
 
+// ── SHARE ─────────────────────────────────────────────────────────────────
+let _shareTitle = '', _shareLink = '';
+
+function openShareMenu(btn, titleEnc, linkEnc) {
+  _shareTitle = decodeURIComponent(titleEnc);
+  _shareLink  = decodeURIComponent(linkEnc);
+
+  // Try native share first (mobile)
+  if (navigator.share) {
+    navigator.share({ title: _shareTitle, url: _shareLink }).catch(() => {});
+    return;
+  }
+
+  const pop = document.getElementById('sharePopover');
+  const rect = btn.getBoundingClientRect();
+  pop.style.top  = (rect.bottom + 6 + window.scrollY) + 'px';
+  pop.style.left = Math.min(rect.left, window.innerWidth - 170) + 'px';
+  pop.classList.add('open');
+
+  // Close when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', closeShareMenu, { once: true });
+  }, 0);
+}
+
+function closeShareMenu() {
+  document.getElementById('sharePopover').classList.remove('open');
+}
+
+function shareToX() {
+  const text = encodeURIComponent(`${_shareTitle} ${_shareLink}`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+  closeShareMenu();
+}
+
+function shareToFacebook() {
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(_shareLink)}`, '_blank');
+  closeShareMenu();
+}
+
+function copyShareLink() {
+  navigator.clipboard.writeText(_shareLink).then(() => showToast('🔗 Link copied!')).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = _shareLink; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('🔗 Link copied!');
+  });
+  closeShareMenu();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── STREAK COUNTER ────────────────────────────────────────────────────────
+function updateStreak() {
+  try {
+    const today     = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const lastVisit = localStorage.getItem('cw_streak_date') || '';
+    let   streak    = parseInt(localStorage.getItem('cw_streak_count') || '0');
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+
+    if (lastVisit === today) {
+      // Already counted today — just render
+    } else if (lastVisit === yesterday) {
+      streak += 1;
+      localStorage.setItem('cw_streak_count', streak);
+      localStorage.setItem('cw_streak_date',  today);
+    } else {
+      // Missed a day — reset
+      streak = 1;
+      localStorage.setItem('cw_streak_count', 1);
+      localStorage.setItem('cw_streak_date',  today);
+    }
+
+    if (streak >= 2) {
+      const el = document.getElementById('streakBadge');
+      if (el) {
+        el.innerHTML = `<span class="streak-badge">🔥 ${streak}-day streak</span>`;
+        el.style.display = 'block';
+      }
+    }
+  } catch {}
+}
+
 // ── TAB DRAG-AND-DROP REORDERING ──────────────────────────────────────────
 const DEFAULT_TAB_ORDER = ['world','us','europe','asia','middleeast','africa','latam','politics','business','tech','science','sports','entertainment'];
 let dragSrcTab = null;
@@ -1880,6 +1997,7 @@ loadPrefs();
 loadDarkMode();
 loadFontSize();
 loadBookmarks();
+updateStreak();
 loadTabOrder();
 initTabDrag();
 renderFilterChips();
