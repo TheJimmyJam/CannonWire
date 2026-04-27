@@ -102,6 +102,22 @@
         .reg-link:hover { background:#f8f8f2; color:var(--accent); }
         .src-dot { color:var(--accent); }
 
+        /* BLOCK FILTER */
+        .filter-body { padding:12px 16px; }
+        .filter-input-row { display:flex; gap:8px; margin-bottom:10px; }
+        .filter-input { flex:1; padding:7px 10px; border:1px solid var(--border); border-radius:4px; font:13px Arial,sans-serif; color:var(--text); outline:none; transition:border-color .15s; }
+        .filter-input:focus { border-color:var(--accent); }
+        .filter-btn { padding:7px 12px; background:var(--primary); color:#fff; border:none; border-radius:4px; font:700 12px/1 Arial,sans-serif; cursor:pointer; white-space:nowrap; transition:background .15s; }
+        .filter-btn:hover { background:#1a3a6b; }
+        .chips { display:flex; flex-wrap:wrap; gap:6px; min-height:0; }
+        .chip { display:inline-flex; align-items:center; gap:5px; background:#fef2f2; border:1px solid #fecaca; border-radius:20px; padding:4px 10px 4px 12px; font:700 11px/1 Arial,sans-serif; color:#dc2626; }
+        .chip-x { background:none; border:none; cursor:pointer; color:#dc2626; font-size:14px; line-height:1; padding:0; opacity:.7; transition:opacity .1s; }
+        .chip-x:hover { opacity:1; }
+        .filter-stats { margin-top:10px; padding-top:8px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font:11px Arial,sans-serif; color:#9ca3af; }
+        .filter-clear { background:none; border:none; font:700 11px Arial,sans-serif; color:var(--accent); cursor:pointer; padding:0; }
+        .filter-clear:hover { text-decoration:underline; }
+        .filter-empty { font:12px Arial,sans-serif; color:#9ca3af; font-style:italic; }
+
         /* WEATHER WIDGET */
         .wx-card { border-radius:8px; overflow:hidden; border:1px solid var(--border); }
         .wx-head { background:var(--primary); color:#fff; padding:10px 16px; font:800 11px/1 Arial,sans-serif; text-transform:uppercase; letter-spacing:1.2px; }
@@ -232,6 +248,26 @@
             </div>
         </div>
 
+        <!-- BLOCK FILTER -->
+        <div class="sb-card">
+            <div class="sb-head">🚫 Block Topics</div>
+            <div class="filter-body">
+                <div class="filter-input-row">
+                    <input class="filter-input" id="filterInput" type="text"
+                           placeholder="e.g. Trump, crypto, Kardashian…"
+                           onkeydown="if(event.key==='Enter') addFilter()">
+                    <button class="filter-btn" onclick="addFilter()">Block</button>
+                </div>
+                <div class="chips" id="filterChips">
+                    <span class="filter-empty">No filters active.</span>
+                </div>
+                <div class="filter-stats" id="filterStats" style="display:none">
+                    <span id="filterCount">0 articles hidden</span>
+                    <button class="filter-clear" onclick="clearAllFilters()">Clear all</button>
+                </div>
+            </div>
+        </div>
+
         <div class="sb-card">
             <div class="sb-head">🔥 Trending Now</div>
             <div id="trending"><div style="padding:20px;text-align:center;color:#9ca3af;font:12px Arial,sans-serif">Loading…</div></div>
@@ -342,6 +378,7 @@ const PROXIES = [
 let activeTab = 'us';
 const tabCache    = {};   // tabCache[tab][sourceName]  = articles[]
 const srcToggles  = {};   // srcToggles[tab][sourceName] = true/false
+let   blockedTerms = [];  // global keyword blocklist
 
 // ── UTILITIES ─────────────────────────────────────────────────────────────
 const esc  = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -507,6 +544,18 @@ function applyFiltersAndRender(tab) {
     })
     .sort((a,b) => new Date(b.pubDate) - new Date(a.pubDate));
 
+  // Apply keyword blocklist
+  const totalBefore = articles.length;
+  if (blockedTerms.length) {
+    const patterns = blockedTerms.map(t => new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i'));
+    articles = articles.filter(a => {
+      const hay = (a.title + ' ' + a.description).toLowerCase();
+      return !patterns.some(p => p.test(hay));
+    });
+  }
+  const hidden = totalBefore - articles.length;
+  updateFilterStats(hidden);
+
   renderGrid(articles);
   renderTrending(articles.slice(0, 8));
   renderTicker(articles.slice(0, 30));
@@ -629,6 +678,55 @@ function renderSources(tab) {
         <button style="color:var(--muted)" onclick="setAllSources('${tab}',false)">None</button>
       </span>
     </div>`;
+}
+
+// ── BLOCK FILTER ──────────────────────────────────────────────────────────
+function addFilter() {
+  const input = document.getElementById('filterInput');
+  const term  = input.value.trim();
+  if (!term) return;
+  // Avoid exact duplicates (case-insensitive)
+  if (blockedTerms.some(t => t.toLowerCase() === term.toLowerCase())) {
+    input.value = ''; return;
+  }
+  blockedTerms.push(term);
+  input.value = '';
+  renderFilterChips();
+  applyFiltersAndRender(activeTab);
+}
+
+function removeFilter(term) {
+  blockedTerms = blockedTerms.filter(t => t !== term);
+  renderFilterChips();
+  applyFiltersAndRender(activeTab);
+}
+
+function clearAllFilters() {
+  blockedTerms = [];
+  renderFilterChips();
+  applyFiltersAndRender(activeTab);
+}
+
+function renderFilterChips() {
+  const wrap = document.getElementById('filterChips');
+  if (!blockedTerms.length) {
+    wrap.innerHTML = '<span class="filter-empty">No filters active.</span>';
+    document.getElementById('filterStats').style.display = 'none';
+    return;
+  }
+  wrap.innerHTML = blockedTerms.map(t => `
+    <span class="chip">
+      ${esc(t)}
+      <button class="chip-x" onclick="removeFilter('${esc(t)}')" title="Remove">×</button>
+    </span>`).join('');
+  document.getElementById('filterStats').style.display = 'flex';
+}
+
+function updateFilterStats(hiddenCount) {
+  const el = document.getElementById('filterCount');
+  if (el) el.textContent = hiddenCount === 0
+    ? 'No articles hidden'
+    : `${hiddenCount} article${hiddenCount !== 1 ? 's' : ''} hidden`;
 }
 
 // ── WEATHER WIDGET ────────────────────────────────────────────────────────
